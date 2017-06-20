@@ -1,0 +1,24 @@
+apply plugin: 'java'
+apply plugin: 'eclipse'
+version = '0.0.1'
+
+
+repositories {
+  jcenter()
+}
+
+dependencies {
+  compile 'com.sedmelluq:lavaplayer:1.2.39'
+  compile 'net.dv8tion:JDA:3.1.1_210'
+}
+
+task makeJar(type: Jar) {
+	manifest {
+        attributes 'Implementation-Title': 'ThunderBot',
+        	'Implementation-Version': '0.0.1',
+        	'Main-Class': 'wh1spr.thunderbot.ThunderBot'
+    }
+    baseName = 'ThunderBot'
+    from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
+    with jar
+}
