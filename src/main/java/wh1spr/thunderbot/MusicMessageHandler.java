@@ -48,6 +48,9 @@ public class MusicMessageHandler extends ListenerAdapter{
 	@Override
     public void onGuildMessageReceived(GuildMessageReceivedEvent event) 
     {
+		
+		
+		
 		if (event.getMessage().getRawContent().startsWith("&&shutdown")) {
 			event.getChannel().deleteMessageById(event.getMessageIdLong()).complete();
 //			System.out.println(event.getAuthor().getId());
@@ -60,12 +63,26 @@ public class MusicMessageHandler extends ListenerAdapter{
 		Guild guild = event.getGuild();
 	    AudioPlayer player = mng.player;
 	    AudioEventHandler scheduler = mng.scheduler;
-		
+		if (event.getAuthor().getId().equals("225244113161682944")) {
+			if (command[0].equals("!volume")) {
+				event.getChannel().sendMessage("Can't do that boiiiii");
+			}
+			if (command[0].equals("!skip")) {
+				event.getChannel().sendMessage("Replay enabled.");
+			}
+			if (command[0].equals("!join")) {
+				event.getChannel().sendMessage("Not joining channel *#" + command[1] + "*" );
+			}
+			if (command[0].equals("!pause")) {
+				event.getChannel().sendMessage("lol nope lmao :D");
+			}
+			return;
+		}
 		if (command[0].equals("!join")) {
         
 	        if (event.getAuthor().isBot()) return;
 	       
-	        VoiceChannel channel = guild.getVoiceChannelsByName("music", true).get(0);
+	        VoiceChannel channel = guild.getVoiceChannelsByName("general", true).get(0);
 	
 	        // MySendHandler should be your AudioSendHandler implementation
 	        guild.getAudioManager().setSendingHandler(mng.getSendHandler());
