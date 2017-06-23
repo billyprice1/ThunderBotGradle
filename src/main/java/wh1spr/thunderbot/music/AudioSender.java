@@ -1,16 +1,16 @@
-package wh1spr.thunderbot;
+package wh1spr.thunderbot.music;
 
 import com.sedmelluq.discord.lavaplayer.player.AudioPlayer;
 import com.sedmelluq.discord.lavaplayer.track.playback.AudioFrame;
 
 import net.dv8tion.jda.core.audio.AudioSendHandler;
 
-public class AudioScheduler implements AudioSendHandler {
+public class AudioSender implements AudioSendHandler {
 	
 	private AudioPlayer audioPlayer;
 	private AudioFrame lastFrame;
 	
-	public AudioScheduler(AudioPlayer player) {
+	public AudioSender(AudioPlayer player) {
 		this.audioPlayer = player;
 	}
 	

@@ -1,7 +1,9 @@
-package wh1spr.thunderbot;
+package wh1spr.thunderbot.music;
 
 import com.sedmelluq.discord.lavaplayer.player.AudioPlayer;
 import com.sedmelluq.discord.lavaplayer.player.AudioPlayerManager;
+
+import net.dv8tion.jda.core.entities.Guild;
 
 /**
  * Holder for both the player and a track scheduler for one guild.
@@ -14,27 +16,25 @@ public class GuildMusicManager {
     /**
      * Track scheduler for the player.
      */
-    public final AudioEventHandler scheduler;
+    public final AudioScheduler scheduler;
 
     /**
      * Creates a player and a track scheduler.
      * @param manager Audio player manager to use for creating the player.
      */
-    public GuildMusicManager(AudioPlayerManager manager)
+    public GuildMusicManager(AudioPlayerManager manager, Guild guild)
     {
         player = manager.createPlayer();
-        scheduler = new AudioEventHandler(player);
+        scheduler = new AudioScheduler(player, guild.getTextChannelsByName("music", true).get(0));
         player.addListener(scheduler);
         
         player.setVolume(35);
-        System.out.println(player.getVolume());
-        System.out.println(player.isPaused());
     }
     
     /**
      * @return Wrapper around AudioPlayer to use it as an AudioSendHandler.
      */
-    public AudioScheduler getSendHandler() {
-    	return new AudioScheduler(player);
+    public AudioSender getSendHandler() {
+    	return new AudioSender(player);
     }
 }

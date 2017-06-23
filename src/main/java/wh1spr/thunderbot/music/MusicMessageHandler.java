@@ -1,5 +1,6 @@
-package wh1spr.thunderbot;
+package wh1spr.thunderbot.music;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
@@ -18,15 +19,19 @@ import com.sedmelluq.discord.lavaplayer.tools.FriendlyException;
 import com.sedmelluq.discord.lavaplayer.track.AudioPlaylist;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
 
+import net.dv8tion.jda.core.JDA;
+import net.dv8tion.jda.core.entities.Game;
 import net.dv8tion.jda.core.entities.Guild;
 import net.dv8tion.jda.core.entities.Message;
 import net.dv8tion.jda.core.entities.MessageChannel;
 import net.dv8tion.jda.core.entities.TextChannel;
 import net.dv8tion.jda.core.entities.VoiceChannel;
 import net.dv8tion.jda.core.events.message.guild.GuildMessageReceivedEvent;
+import net.dv8tion.jda.core.exceptions.RateLimitedException;
 import net.dv8tion.jda.core.hooks.ListenerAdapter;
 import net.dv8tion.jda.core.managers.AudioManager;
 import net.dv8tion.jda.core.requests.restaction.pagination.MessagePaginationAction;
+import wh1spr.thunderbot.ThunderBot;
 
 public class MusicMessageHandler extends ListenerAdapter{
 
@@ -39,32 +44,181 @@ public class MusicMessageHandler extends ListenerAdapter{
         playerManager.registerSourceManager(new TwitchStreamAudioSourceManager());
         playerManager.registerSourceManager(new HttpAudioSourceManager());
         playerManager.registerSourceManager(new LocalAudioSourceManager());
-        this.mng = new GuildMusicManager(playerManager);
         this.mngs = new HashMap<String, GuildMusicManager>();
 	}
 	
-	
 	private final AudioPlayerManager playerManager;
-	private final GuildMusicManager mng;
 	private final HashMap<String, GuildMusicManager> mngs; //id of the guild, manager for that guild
 	
-	
-	public void onGuildMessageReceivedReplacement(GuildMessageReceivedEvent event) {
+	@Override
+	public void onGuildMessageReceived(GuildMessageReceivedEvent event) {
+//		if (!event.getMessage().getRawContent().startsWith("!") && !event.getMessage().getRawContent().startsWith("&&")) {
+//			return;
+//		}
+		
 		String[] command = event.getMessage().getContent().split(" ", 2);
 		Guild guild = event.getGuild();
+		
+		GuildMusicManager mng = mngs.get(guild.getId());
+		if (mng == null) {
+			mng = new GuildMusicManager(playerManager, guild);
+			mngs.put(guild.getId(), mng);
+		}
+		
 	    AudioPlayer player = mng.player;
-	    AudioEventHandler scheduler = mng.scheduler;
+	    AudioScheduler scheduler = mng.scheduler;
+	    
+	    switch (command[0].toLowerCase()) {
+			case "&&shutdown":
+				event.getChannel().deleteMessageById(event.getMessageIdLong()).complete();
+				if (ThunderBot.admins.contains(event.getAuthor().getId()))
+					guild.getAudioManager().closeAudioConnection();
+					event.getChannel().sendMessage("Goodbye.").complete();
+					System.exit(0);
+				break;
+				
+			case "!join":
+				VoiceChannel channel;
+				
+				if (command.length < 2) {
+					channel = guild.getVoiceChannels().get(0);
+				} else {
+					channel = guild.getVoiceChannelsByName(command[1], true).get(0);
+				}
+				if (channel == null) {
+					event.getChannel().sendMessage("There is no channel with name ```" + command[1] + "```").queue();
+				}
+		        guild.getAudioManager().setSendingHandler(mng.getSendHandler());
+		        guild.getAudioManager().openAudioConnection(channel); 
+		        break;
+				
+			case "!play":
+				if (command.length == 1) { //It is only the command to start playback (probably after pause)
+	                if (player.isPaused()) {
+	                    player.setPaused(false);
+	                    event.getChannel().sendMessage("Playback as been resumed.").queue();
+	                } else if (player.getPlayingTrack() != null) {
+	                    event.getChannel().sendMessage("Player is already playing.").queue();
+	                } else if (scheduler.queue.isEmpty()) {
+	                    event.getChannel().sendMessage("The current audio queue is empty! Add something to the queue first!").queue();
+	                }
+	            } else {
+	                loadAndPlay(mng, event.getChannel(), command[1], false);
+	            }
+				break;
+			
+			case "!skip":
+				if (player.getPlayingTrack() == null) {
+					event.getChannel().sendMessage("I'm not playing anything.").queue();
+				} else {
+					
+					event.getChannel().sendMessage("Skipped " + player.getPlayingTrack().getInfo().title).queue();
+					scheduler.nextTrack();
+				}
+				break;
+			
+			case "!volume":
+				if (command.length == 1) {
+					event.getChannel().sendMessage(String.format("The current volume is %d/100", player.getVolume())).queue();
+				} else {
+					int vol = 35;
+					try {
+						vol = Integer.valueOf(command[1]);
+					} catch (Exception e) {
+						vol = 35;
+						//usage
+					}
+					player.setVolume(vol);
+				}
+				break;
+			
+			case "!pause":
+				player.setPaused(!player.isPaused()); break;
+		    	
+			case "!np":
+			case "!nowplaying":
+				AudioTrack currentTrack = player.getPlayingTrack();
+	            if (currentTrack != null)
+	            {
+	                String title = currentTrack.getInfo().title;
+	                String position = getTimestamp(currentTrack.getPosition());
+	                String duration = getTimestamp(currentTrack.getDuration());
+
+	                String nowplaying = String.format("**Playing:** %s\n**Time:** [%s / %s]",
+	                        title, position, duration);
+
+	                event.getChannel().sendMessage(nowplaying).queue();
+	            } else {
+	            	event.getChannel().sendMessage("The player is not currently playing anything!").queue();
+	            }
+	            break;
+			case "&&changename":
+			case "&&cn":
+				if (command.length < 2) {
+					//usage
+					return;
+				} else if (ThunderBot.admins.contains(event.getAuthor().getId())){
+//					this.jda.getPresence().setGame(Game.of(command[1]));	
+					ThunderBot.jda.getSelfUser().getManager().setName(event.getMessage().getRawContent().replaceFirst(command[0], "")).complete();
+				}
+				break;
+			
+			case "&&cg":
+			case "&&changegame":
+				if (command.length < 2) {
+					//usage
+					System.out.println("too short");
+					return;
+				} else if (ThunderBot.admins.contains(event.getAuthor().getId())){
+					System.out.println("changing");
+					ThunderBot.jda.getPresence().setGame(Game.of(event.getMessage().getRawContent().replaceFirst(command[0], "")));	
+					System.out.println("changed.");
+				}
+				break;
+			
+			case "!stop":
+			case "§1":
+				if (command[0].equals("§1") && ThunderBot.admins.contains(event.getAuthor().getId())) {
+					event.getChannel().deleteMessageById(event.getMessageId()).queue();
+					player.stopTrack();
+		            player.setPaused(false);
+				} else if (command[0].equals("!stop")) {
+					player.stopTrack();
+		            player.setPaused(false);
+				}
+				break;
+				
+			case "&&clean":
+				if (ThunderBot.admins.contains(event.getAuthor().getId())) {
+					List<Message> msgs = new ArrayList<>();
+					if (command.length < 2) {
+						try {
+							msgs = event.getChannel().getIterableHistory().complete(true);
+							
+						} catch (RateLimitedException e1) {
+							e1.printStackTrace();
+						}
+					} else {
+						msgs = event.getChannel().getHistory().retrievePast(Integer.valueOf(command[1]) + 1).complete();
+					}
+					for (Message e : msgs) {
+						if (e.isPinned()) msgs.remove(e);
+					}
+					event.getChannel().deleteMessages(msgs).queue();
+				}
+				break;
+			default:
+				break;
+		}
 	}
 	
-	@Override
-    public void onGuildMessageReceived(GuildMessageReceivedEvent event) 
+    public void onGuildMessageReceivedOld(GuildMessageReceivedEvent event) 
     {
 		
 		
 		
 		if (event.getMessage().getRawContent().startsWith("&&shutdown")) {
 			event.getChannel().deleteMessageById(event.getMessageIdLong()).complete();
-//			System.out.println(event.getAuthor().getId());
 			if (event.getAuthor().getId().equals("204529799912226816") ||
 					event.getAuthor().getId().equals("277140443785854986"))
 				System.exit(0);
@@ -72,8 +226,14 @@ public class MusicMessageHandler extends ListenerAdapter{
 		
 		String[] command = event.getMessage().getContent().split(" ", 2);
 		Guild guild = event.getGuild();
+		GuildMusicManager mng = mngs.get(guild.getId());
+		if (mng == null) {
+			mng = new GuildMusicManager(playerManager, guild);
+			mngs.put(guild.getId(), mng);
+		}
+		
 	    AudioPlayer player = mng.player;
-	    AudioEventHandler scheduler = mng.scheduler;
+	    AudioScheduler scheduler = mng.scheduler;
 		if (event.getAuthor().getId().equals("225244113161682944")) {
 			if (command[0].equals("!volume")) {
 				event.getChannel().sendMessage("Can't do that boiiiii");
@@ -178,8 +338,6 @@ public class MusicMessageHandler extends ListenerAdapter{
             public void trackLoaded(AudioTrack track)
             {
                 String msg = "Adding to queue: " + track.getInfo().title;
-                if (mng.player.getPlayingTrack() == null)
-                    msg += "\nand the Player has started playing;";
 
                 mng.scheduler.queue(track);
                 channel.sendMessage(msg).queue();

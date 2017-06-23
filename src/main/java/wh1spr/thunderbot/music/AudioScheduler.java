@@ -1,4 +1,4 @@
-package wh1spr.thunderbot;
+package wh1spr.thunderbot.music;
 
 import java.util.Collections;
 import java.util.LinkedList;
@@ -11,20 +11,24 @@ import com.sedmelluq.discord.lavaplayer.player.event.AudioEventAdapter;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrackEndReason;
 
-public class AudioEventHandler extends AudioEventAdapter{
+import net.dv8tion.jda.core.entities.TextChannel;
+
+public class AudioScheduler extends AudioEventAdapter{
 	
 	private boolean repeating = false;
     final AudioPlayer player;
     final Queue<AudioTrack> queue;
     AudioTrack lastTrack;
+    final TextChannel channel;
 
     /**
      * @param player The audio player this scheduler uses
      */
-    public AudioEventHandler(AudioPlayer player)
+    public AudioScheduler(AudioPlayer player, TextChannel channel)
     {
         this.player = player;
         this.queue = new LinkedBlockingQueue<AudioTrack>();
+        this.channel = channel;
     }
 
     /**
@@ -44,9 +48,11 @@ public class AudioEventHandler extends AudioEventAdapter{
      */
     public void nextTrack()
     {
+    	
         // Start the next track, regardless of if something is already playing or not. In case queue was empty, we are
         // giving null to startTrack, which is a valid argument and will simply stop the player.
         player.startTrack(queue.poll(), false);
+        if (channel != null) if (player.getPlayingTrack() != null) channel.sendMessage("**Playing: ** " + player.getPlayingTrack().getInfo().title).queue();
        
     }
 
