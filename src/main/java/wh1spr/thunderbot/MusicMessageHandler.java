@@ -1,5 +1,6 @@
 package wh1spr.thunderbot;
 
+import java.util.HashMap;
 import java.util.List;
 
 import com.sedmelluq.discord.lavaplayer.player.AudioLoadResultHandler;
@@ -39,11 +40,21 @@ public class MusicMessageHandler extends ListenerAdapter{
         playerManager.registerSourceManager(new HttpAudioSourceManager());
         playerManager.registerSourceManager(new LocalAudioSourceManager());
         this.mng = new GuildMusicManager(playerManager);
+        this.mngs = new HashMap<String, GuildMusicManager>();
 	}
 	
 	
 	private final AudioPlayerManager playerManager;
 	private final GuildMusicManager mng;
+	private final HashMap<String, GuildMusicManager> mngs; //id of the guild, manager for that guild
+	
+	
+	public void onGuildMessageReceivedReplacement(GuildMessageReceivedEvent event) {
+		String[] command = event.getMessage().getContent().split(" ", 2);
+		Guild guild = event.getGuild();
+	    AudioPlayer player = mng.player;
+	    AudioEventHandler scheduler = mng.scheduler;
+	}
 	
 	@Override
     public void onGuildMessageReceived(GuildMessageReceivedEvent event) 

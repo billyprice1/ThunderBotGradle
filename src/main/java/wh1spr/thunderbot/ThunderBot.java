@@ -24,6 +24,6 @@ public class ThunderBot extends ListenerAdapter implements EventListener{
 		
 		System.out.println("Logging bot in...");
 			
-		jda.getSelfUser().getManager().setName("Wh1spr's Queen").submit();
+		jda.getSelfUser().getManager().setName("The Best Bot").submit();
 	}
 }
