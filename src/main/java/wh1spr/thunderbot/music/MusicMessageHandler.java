@@ -31,6 +31,7 @@ import net.dv8tion.jda.core.exceptions.RateLimitedException;
 import net.dv8tion.jda.core.hooks.ListenerAdapter;
 import net.dv8tion.jda.core.managers.AudioManager;
 import net.dv8tion.jda.core.requests.restaction.pagination.MessagePaginationAction;
+import wh1spr.thunderbot.HelpCommand;
 import wh1spr.thunderbot.ThunderBot;
 
 public class MusicMessageHandler extends ListenerAdapter{
@@ -49,14 +50,18 @@ public class MusicMessageHandler extends ListenerAdapter{
 	
 	private final AudioPlayerManager playerManager;
 	private final HashMap<String, GuildMusicManager> mngs; //id of the guild, manager for that guild
+	private final HelpCommand help = new HelpCommand();
 	
 	@Override
 	public void onGuildMessageReceived(GuildMessageReceivedEvent event) {
-//		if (!event.getMessage().getRawContent().startsWith("!") && !event.getMessage().getRawContent().startsWith("&&")) {
-//			return;
-//		}
+		if (!event.getMessage().getRawContent().startsWith("!") && 
+				!event.getMessage().getRawContent().startsWith("&&") &&
+				!event.getMessage().getRawContent().startsWith("`1") &&
+				!event.getMessage().getRawContent().startsWith("§1")) {
+			return;
+		}
 		
-		String[] command = event.getMessage().getContent().split(" ", 2);
+		String[] command = event.getMessage().getContent().split(" ");
 		Guild guild = event.getGuild();
 		
 		GuildMusicManager mng = mngs.get(guild.getId());
@@ -68,7 +73,9 @@ public class MusicMessageHandler extends ListenerAdapter{
 	    AudioPlayer player = mng.player;
 	    AudioScheduler scheduler = mng.scheduler;
 	    
-	    switch (command[0].toLowerCase()) {
+	    String a = command[0].toLowerCase();
+	    
+	    switch (a) {
 			case "&&shutdown":
 				event.getChannel().deleteMessageById(event.getMessageIdLong()).complete();
 				if (ThunderBot.admins.contains(event.getAuthor().getId()))
@@ -76,7 +83,10 @@ public class MusicMessageHandler extends ListenerAdapter{
 					event.getChannel().sendMessage("Goodbye.").complete();
 					System.exit(0);
 				break;
-				
+			
+			case "!help":
+				help.evaluate(event, mng);
+				break;
 			case "!join":
 				VoiceChannel channel;
 				
@@ -92,6 +102,9 @@ public class MusicMessageHandler extends ListenerAdapter{
 		        guild.getAudioManager().openAudioConnection(channel); 
 		        break;
 				
+			case "!leave":
+				guild.getAudioManager().closeAudioConnection();
+				break;
 			case "!play":
 				if (command.length == 1) { //It is only the command to start playback (probably after pause)
 	                if (player.isPaused()) {
@@ -131,10 +144,12 @@ public class MusicMessageHandler extends ListenerAdapter{
 					player.setVolume(vol);
 				}
 				break;
-			
+			case "!p":
 			case "!pause":
+				if (player.getPlayingTrack() == null)player.setPaused(true);
 				player.setPaused(!player.isPaused()); break;
-		    	
+				
+			case "!now":
 			case "!np":
 			case "!nowplaying":
 				AudioTrack currentTrack = player.getPlayingTrack();
@@ -156,6 +171,7 @@ public class MusicMessageHandler extends ListenerAdapter{
 			case "&&cn":
 				if (command.length < 2) {
 					//usage
+					ThunderBot.jda.getSelfUser().getManager().setName("ThunderBot");
 					return;
 				} else if (ThunderBot.admins.contains(event.getAuthor().getId())){
 //					this.jda.getPresence().setGame(Game.of(command[1]));	
@@ -167,18 +183,16 @@ public class MusicMessageHandler extends ListenerAdapter{
 			case "&&changegame":
 				if (command.length < 2) {
 					//usage
-					System.out.println("too short");
 					return;
 				} else if (ThunderBot.admins.contains(event.getAuthor().getId())){
-					System.out.println("changing");
 					ThunderBot.jda.getPresence().setGame(Game.of(event.getMessage().getRawContent().replaceFirst(command[0], "")));	
-					System.out.println("changed.");
 				}
 				break;
 			
 			case "!stop":
 			case "§1":
-				if (command[0].equals("§1") && ThunderBot.admins.contains(event.getAuthor().getId())) {
+			case "`1":
+				if ((command[0].equals("§1") || command[0].equals("`1"))&& ThunderBot.admins.contains(event.getAuthor().getId())) {
 					event.getChannel().deleteMessageById(event.getMessageId()).queue();
 					player.stopTrack();
 		            player.setPaused(false);
@@ -211,116 +225,6 @@ public class MusicMessageHandler extends ListenerAdapter{
 				break;
 		}
 	}
-	
-    public void onGuildMessageReceivedOld(GuildMessageReceivedEvent event) 
-    {
-		
-		
-		
-		if (event.getMessage().getRawContent().startsWith("&&shutdown")) {
-			event.getChannel().deleteMessageById(event.getMessageIdLong()).complete();
-			if (event.getAuthor().getId().equals("204529799912226816") ||
-					event.getAuthor().getId().equals("277140443785854986"))
-				System.exit(0);
-		}
-		
-		String[] command = event.getMessage().getContent().split(" ", 2);
-		Guild guild = event.getGuild();
-		GuildMusicManager mng = mngs.get(guild.getId());
-		if (mng == null) {
-			mng = new GuildMusicManager(playerManager, guild);
-			mngs.put(guild.getId(), mng);
-		}
-		
-	    AudioPlayer player = mng.player;
-	    AudioScheduler scheduler = mng.scheduler;
-		if (event.getAuthor().getId().equals("225244113161682944")) {
-			if (command[0].equals("!volume")) {
-				event.getChannel().sendMessage("Can't do that boiiiii");
-			}
-			if (command[0].equals("!skip")) {
-				event.getChannel().sendMessage("Replay enabled.");
-			}
-			if (command[0].equals("!join")) {
-				event.getChannel().sendMessage("Not joining channel *#" + command[1] + "*" );
-			}
-			if (command[0].equals("!pause")) {
-				event.getChannel().sendMessage("lol nope lmao :D");
-			}
-			return;
-		}
-		if (command[0].equals("!join")) {
-        
-	        if (event.getAuthor().isBot()) return;
-	       
-	        VoiceChannel channel = guild.getVoiceChannelsByName("general", true).get(0);
-	
-	        // MySendHandler should be your AudioSendHandler implementation
-	        guild.getAudioManager().setSendingHandler(mng.getSendHandler());
-	        // Here we finally connect to the target voice channel 
-	        // and it will automatically start pulling the audio from the MySendHandler instance
-	        guild.getAudioManager().openAudioConnection(channel); 
-	        
-	        
-	    } else if ("!play".equals(command[0])) {
-            if (command.length == 1) //It is only the command to start playback (probably after pause)
-            {
-                if (player.isPaused())
-                {
-                    player.setPaused(false);
-                    event.getChannel().sendMessage("Playback as been resumed.").queue();
-                }
-                else if (player.getPlayingTrack() != null)
-                {
-                    event.getChannel().sendMessage("Player is already playing!").queue();
-                }
-                else if (scheduler.queue.isEmpty())
-                {
-                    event.getChannel().sendMessage("The current audio queue is empty! Add something to the queue first!").queue();
-                }
-            } else {
-                loadAndPlay(mng, event.getChannel(), command[1], false);
-            }
-        } else if (command[0].equals("!pause")) {
-	    	player.setPaused(!player.isPaused());
-	    	if (player.isPaused()) {
-	    		event.getChannel().sendMessage("Paused.").queue();;
-	    	} else event.getChannel().sendMessage("Resumed.").queue();;
-	    } else if (command[0].equals("!stop")) {
-	    	player.stopTrack();
-            player.setPaused(false);
-	    } else if (command[0].equals("!removeMSG")) {
-	    	event.getChannel().deleteMessageById(command[1].trim()).queue();
-	    	event.getChannel().deleteMessageById(event.getMessageId()).queue();
-	    } else if (command[0].equals("!removeLatest")) {
-	    	int i = Integer.valueOf(command[1]);
-	    	TextChannel channel = event.getChannel();
-	    	List<Message> messages = channel.getIterableHistory().complete();
-	    	while (i >= 0) {
-	    		channel.deleteMessageById(messages.get(i).getId()).queue();
-	    		i--;
-	    	}
-	    } else if ("!nowplaying".equals(command[0]) || "!np".equals(command[0])) {
-            AudioTrack currentTrack = player.getPlayingTrack();
-            if (currentTrack != null)
-            {
-                String title = currentTrack.getInfo().title;
-                String position = getTimestamp(currentTrack.getPosition());
-                String duration = getTimestamp(currentTrack.getDuration());
-
-                String nowplaying = String.format("**Playing:** %s\n**Time:** [%s / %s]",
-                        title, position, duration);
-
-                event.getChannel().sendMessage(nowplaying).queue();
-            }
-            else
-                event.getChannel().sendMessage("The player is not currently playing anything!").queue();
-        } else if ("!skip".equals(command[0])) {
-        	scheduler.nextTrack();
-        } else if ("!volume".equals(command[0])) {
-        	player.setVolume(Integer.valueOf(command[1]));
-        }
-    }
 	
 	private void loadAndPlay(GuildMusicManager mng, final MessageChannel channel, String url, final boolean addPlaylist)
     {
