@@ -1,4 +1,5 @@
 bin/
 build/
 .project
-.gradle
+.gradle/
+.gradle/2.14.1/
