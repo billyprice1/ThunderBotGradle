@@ -1,6 +1,6 @@
 apply plugin: 'java'
 apply plugin: 'eclipse'
-version = '0.0.2'
+version = '0.1.1'
 
 
 repositories {
@@ -15,9 +15,12 @@ dependencies {
 }
 
 task makeJar(type: Jar) {
+	from('src/main/java') {
+      include  '**/*.ini'
+   	}
 	manifest {
         attributes 'Implementation-Title': 'ThunderBot',
-        	'Implementation-Version': '0.0.1',
+        	'Implementation-Version': version,
         	'Main-Class': 'wh1spr.thunderbot.ThunderBot'
     }
     baseName = 'ThunderBot'

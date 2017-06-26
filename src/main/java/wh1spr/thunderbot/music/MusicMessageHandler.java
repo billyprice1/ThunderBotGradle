@@ -2,6 +2,7 @@ package wh1spr.thunderbot.music;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 
 import com.sedmelluq.discord.lavaplayer.player.AudioLoadResultHandler;
@@ -25,6 +26,7 @@ import net.dv8tion.jda.core.entities.Guild;
 import net.dv8tion.jda.core.entities.Message;
 import net.dv8tion.jda.core.entities.MessageChannel;
 import net.dv8tion.jda.core.entities.TextChannel;
+import net.dv8tion.jda.core.entities.User;
 import net.dv8tion.jda.core.entities.VoiceChannel;
 import net.dv8tion.jda.core.events.message.guild.GuildMessageReceivedEvent;
 import net.dv8tion.jda.core.exceptions.RateLimitedException;
@@ -51,13 +53,21 @@ public class MusicMessageHandler extends ListenerAdapter{
 	private final AudioPlayerManager playerManager;
 	private final HashMap<String, GuildMusicManager> mngs; //id of the guild, manager for that guild
 	private final HelpCommand help = new HelpCommand();
+	private final HashSet<User> deniedSet = new HashSet<>();
 	
 	@Override
 	public void onGuildMessageReceived(GuildMessageReceivedEvent event) {
+		
+			
 		if (!event.getMessage().getRawContent().startsWith("!") && 
 				!event.getMessage().getRawContent().startsWith("&&") &&
 				!event.getMessage().getRawContent().startsWith("`1") &&
 				!event.getMessage().getRawContent().startsWith("§1")) {
+			return;
+		}
+		
+		if (deniedSet.contains(event.getAuthor())) {
+			event.getChannel().sendMessage("Lol nope :D").queue();
 			return;
 		}
 		
@@ -76,6 +86,10 @@ public class MusicMessageHandler extends ListenerAdapter{
 	    String a = command[0].toLowerCase();
 	    
 	    switch (a) {
+	    	case "!deny":
+	    		deniedSet.add(event.getMessage().getMentionedUsers().get(0));
+	    		event.getChannel().sendMessage("Denied " + event.getMessage().getMentionedUsers().get(0).getAsMention()).queue();
+	    		break;
 			case "&&shutdown":
 				event.getChannel().deleteMessageById(event.getMessageIdLong()).complete();
 				if (ThunderBot.admins.contains(event.getAuthor().getId()))

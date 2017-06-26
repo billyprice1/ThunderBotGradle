@@ -21,9 +21,7 @@ public class HelpCommand {
 		
 	public HelpCommand() {
 		try {
-			this.ini = new Wini(new File(getClass().getResource("commands.ini").toURI()));
-		} catch (URISyntaxException e) {
-			e.printStackTrace();
+			this.ini = new Wini(getClass().getResource("commands.ini"));
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
