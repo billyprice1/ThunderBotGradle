@@ -27,9 +27,6 @@ public class ThunderBot extends ListenerAdapter implements EventListener{
 	            .buildBlocking();
 		
 		System.out.println("Logging bot in...");
-			
-		jda.getSelfUser().getManager().setName("Ben Dover").submit();
-		jda.getPresence().setGame(Game.of("with your mom"));
 		
 		admins.add("204529799912226816"); //wh1spr
 		admins.add("277140443785854986"); //wraithgamer2

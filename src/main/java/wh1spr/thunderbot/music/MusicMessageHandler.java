@@ -67,7 +67,8 @@ public class MusicMessageHandler extends ListenerAdapter{
 		}
 		
 		if (deniedSet.contains(event.getAuthor())) {
-			event.getChannel().sendMessage("Lol nope :D").queue();
+			event.getAuthor().openPrivateChannel().complete().sendMessage("You have been denied to use this bot.").queue();
+			event.getChannel().deleteMessageById(event.getMessageId());
 			return;
 		}
 		
@@ -86,16 +87,29 @@ public class MusicMessageHandler extends ListenerAdapter{
 	    String a = command[0].toLowerCase();
 	    
 	    switch (a) {
-	    	case "!deny":
-	    		deniedSet.add(event.getMessage().getMentionedUsers().get(0));
-	    		event.getChannel().sendMessage("Denied " + event.getMessage().getMentionedUsers().get(0).getAsMention()).queue();
+	    	case "&&deny":
+	    		if (command.length < 2 || event.getMessage().getMentionedRoles().get(0) == null) return;
+	    		if (ThunderBot.admins.contains(event.getAuthor().getId())) {
+	    			deniedSet.add(event.getMessage().getMentionedUsers().get(0));
+	    			event.getChannel().sendMessage("Denied " + event.getMessage().getMentionedUsers().get(0).getAsMention()).queue();
+	    			
+	    		}
+	    		break;
+	    	case "&&allow":
+	    		if (command.length < 2 || event.getMessage().getMentionedRoles().get(0) == null) return;
+	    		if (ThunderBot.admins.contains(event.getAuthor().getId())) {
+	    			deniedSet.remove(event.getMessage().getMentionedUsers().get(0));
+	    			event.getChannel().sendMessage("Allowed " + event.getMessage().getMentionedUsers().get(0).getAsMention()).queue();
+	    			
+	    		}
 	    		break;
 			case "&&shutdown":
 				event.getChannel().deleteMessageById(event.getMessageIdLong()).complete();
-				if (ThunderBot.admins.contains(event.getAuthor().getId()))
+				if (ThunderBot.admins.contains(event.getAuthor().getId())) {
 					guild.getAudioManager().closeAudioConnection();
 					event.getChannel().sendMessage("Goodbye.").complete();
 					System.exit(0);
+				}
 				break;
 			
 			case "!help":
@@ -185,11 +199,11 @@ public class MusicMessageHandler extends ListenerAdapter{
 			case "&&cn":
 				if (command.length < 2) {
 					//usage
-					ThunderBot.jda.getSelfUser().getManager().setName("ThunderBot");
+					ThunderBot.jda.getSelfUser().getManager().setName("ThunderBot").submit();
 					return;
 				} else if (ThunderBot.admins.contains(event.getAuthor().getId())){
 //					this.jda.getPresence().setGame(Game.of(command[1]));	
-					ThunderBot.jda.getSelfUser().getManager().setName(event.getMessage().getRawContent().replaceFirst(command[0], "")).complete();
+					ThunderBot.jda.getSelfUser().getManager().setName(event.getMessage().getRawContent().replaceFirst(command[0], "")).submit();
 				}
 				break;
 			
