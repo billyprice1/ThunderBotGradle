@@ -9,6 +9,7 @@ import net.dv8tion.jda.core.AccountType;
 import net.dv8tion.jda.core.JDA;
 import net.dv8tion.jda.core.JDABuilder;
 import net.dv8tion.jda.core.entities.Game;
+import net.dv8tion.jda.core.entities.User;
 import net.dv8tion.jda.core.exceptions.RateLimitedException;
 import net.dv8tion.jda.core.hooks.EventListener;
 import net.dv8tion.jda.core.hooks.ListenerAdapter;
@@ -32,5 +33,36 @@ public class ThunderBot extends ListenerAdapter implements EventListener{
 		admins.add("277140443785854986"); //wraithgamer2
 	}
 	
-	public static final Set<String> admins = new HashSet<String>();
+	private static final Set<String> admins = new HashSet<String>();
+	private static final HashSet<User> deniedSet = new HashSet<>();
+	
+	/**
+	 * Return wether or not the given user is denied to use the bot's commands
+	 * @param user The user to check.
+	 * @return true if the user can not use the bot's commands.
+	 * @return false if the user can use the bot's commands.
+	 */
+	public static final boolean isDenied(User user) {
+		return deniedSet.contains(user);
+	}
+	
+	/**
+	 * Denies a user to use any of the bot's commands.
+	 * @param user The user to deny.
+	 * @return true if the user has been denied.
+	 * @return false if the user was already denied.
+	 */
+	public static final boolean deny(User user) {
+		return deniedSet.add(user);
+	}
+	
+	/**
+	 * Allows a user to use the bot's commands.
+	 * @param user The user to allow.
+	 * @return true if the user was denied access before and has been regranted permission.
+	 * @return false if the user wasn't denied.
+	 */
+	public static final boolean allow(User user) {
+		return deniedSet.remove(user);
+	}
 }
