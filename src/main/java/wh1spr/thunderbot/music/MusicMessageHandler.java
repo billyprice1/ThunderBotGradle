@@ -1,5 +1,6 @@
 package wh1spr.thunderbot.music;
 
+import java.awt.Color;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -20,11 +21,13 @@ import com.sedmelluq.discord.lavaplayer.tools.FriendlyException;
 import com.sedmelluq.discord.lavaplayer.track.AudioPlaylist;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
 
+import net.dv8tion.jda.core.EmbedBuilder;
 import net.dv8tion.jda.core.JDA;
 import net.dv8tion.jda.core.entities.Game;
 import net.dv8tion.jda.core.entities.Guild;
 import net.dv8tion.jda.core.entities.Message;
 import net.dv8tion.jda.core.entities.MessageChannel;
+import net.dv8tion.jda.core.entities.MessageEmbed.Field;
 import net.dv8tion.jda.core.entities.TextChannel;
 import net.dv8tion.jda.core.entities.User;
 import net.dv8tion.jda.core.entities.VoiceChannel;
@@ -88,16 +91,20 @@ public class MusicMessageHandler extends ListenerAdapter{
 	    
 	    switch (a) {
 	    	case "&&deny":
-	    		if (command.length < 2 || event.getMessage().getMentionedRoles().get(0) == null) return;
-	    		if (ThunderBot.admins.contains(event.getAuthor().getId())) {
+	    		if (command.length < 2 || event.getMessage().getMentionedUsers().get(0) == null) return;
+	    		if (ThunderBot.isAdmin(event.getAuthor())) {
 	    			deniedSet.add(event.getMessage().getMentionedUsers().get(0));
-	    			event.getChannel().sendMessage("Denied " + event.getMessage().getMentionedUsers().get(0).getAsMention()).queue();
-	    			
+	    			ThunderBot.deny(event.getMessage().getMentionedUsers());
+	    			String msg = "";
+	    			for (User e : event.getMessage().getMentionedUsers()) {
+	    				msg += e.getAsMention() + "\n";
+	    			}
+	    			event.getChannel().sendMessage(new EmbedBuilder().setColor(Color.red).addField(new Field("Denied following users", msg, false)).build()).queue();
 	    		}
 	    		break;
 	    	case "&&allow":
-	    		if (command.length < 2 || event.getMessage().getMentionedRoles().get(0) == null) return;
-	    		if (ThunderBot.admins.contains(event.getAuthor().getId())) {
+	    		if (command.length < 2 || event.getMessage().getMentionedUsers().get(0) == null) return;
+	    		if (ThunderBot.isAdmin(event.getAuthor())) {
 	    			deniedSet.remove(event.getMessage().getMentionedUsers().get(0));
 	    			event.getChannel().sendMessage("Allowed " + event.getMessage().getMentionedUsers().get(0).getAsMention()).queue();
 	    			
@@ -108,6 +115,7 @@ public class MusicMessageHandler extends ListenerAdapter{
 				if (ThunderBot.admins.contains(event.getAuthor().getId())) {
 					guild.getAudioManager().closeAudioConnection();
 					event.getChannel().sendMessage("Goodbye.").complete();
+					ThunderBot.jda.shutdown();
 					System.exit(0);
 				}
 				break;
@@ -231,24 +239,22 @@ public class MusicMessageHandler extends ListenerAdapter{
 				break;
 				
 			case "&&clean":
-				if (ThunderBot.admins.contains(event.getAuthor().getId())) {
-					List<Message> msgs = new ArrayList<>();
-					if (command.length < 2) {
-						try {
-							msgs = event.getChannel().getIterableHistory().complete(true);
-							
-						} catch (RateLimitedException e1) {
-							e1.printStackTrace();
+				try {
+						
+				
+					if (ThunderBot.admins.contains(event.getAuthor().getId())) {
+						final List<Message> msgs = new ArrayList<>();
+						if (command.length < 2) {
+							event.getChannel().getIterableHistory().complete().iterator().forEachRemaining(e->{if (!e.isPinned()) {msgs.add(e);}});
+						} else {
+							event.getChannel().getHistory().retrievePast(Integer.valueOf(command[1]) + 1).complete().iterator().forEachRemaining(e->{if (!e.isPinned()) {msgs.add(e);}});
 						}
-					} else {
-						msgs = event.getChannel().getHistory().retrievePast(Integer.valueOf(command[1]) + 1).complete();
+						event.getChannel().deleteMessages(msgs).queue();
 					}
-					for (Message e : msgs) {
-						if (e.isPinned()) msgs.remove(e);
-					}
-					event.getChannel().deleteMessages(msgs).queue();
+					break;
+				} catch (Exception e) {
+					event.getChannel().sendMessage("ERROR: Something went wrong while executing this command.");
 				}
-				break;
 			default:
 				break;
 		}

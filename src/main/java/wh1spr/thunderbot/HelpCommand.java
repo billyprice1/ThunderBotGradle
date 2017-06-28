@@ -1,8 +1,6 @@
 package wh1spr.thunderbot;
 
-import java.io.File;
 import java.io.IOException;
-import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.Map.Entry;

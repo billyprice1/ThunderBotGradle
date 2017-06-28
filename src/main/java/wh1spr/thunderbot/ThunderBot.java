@@ -1,6 +1,7 @@
 package wh1spr.thunderbot;
 
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import javax.security.auth.login.LoginException;
@@ -33,8 +34,8 @@ public class ThunderBot extends ListenerAdapter implements EventListener{
 		admins.add("277140443785854986"); //wraithgamer2
 	}
 	
-	private static final Set<String> admins = new HashSet<String>();
-	private static final HashSet<User> deniedSet = new HashSet<>();
+	public static final Set<String> admins = new HashSet<String>();
+	private static final Set<String> deniedSet = new HashSet<String>();
 	
 	/**
 	 * Return wether or not the given user is denied to use the bot's commands
@@ -43,17 +44,24 @@ public class ThunderBot extends ListenerAdapter implements EventListener{
 	 * @return false if the user can use the bot's commands.
 	 */
 	public static final boolean isDenied(User user) {
-		return deniedSet.contains(user);
+		return deniedSet.contains(user.getId());
 	}
 	
 	/**
-	 * Denies a user to use any of the bot's commands.
+	 * Denies a user to use any of the bot's commands. This also removes the user from 
+	 * the admin group if the user was part of that group.
 	 * @param user The user to deny.
 	 * @return true if the user has been denied.
 	 * @return false if the user was already denied.
 	 */
 	public static final boolean deny(User user) {
-		return deniedSet.add(user);
+		admins.remove(user.getId());
+		return deniedSet.add(user.getId());
+	}
+	public static final void deny(List<User> users) {
+		for (User e : users) {
+			deny(e);
+		}
 	}
 	
 	/**
@@ -63,6 +71,35 @@ public class ThunderBot extends ListenerAdapter implements EventListener{
 	 * @return false if the user wasn't denied.
 	 */
 	public static final boolean allow(User user) {
-		return deniedSet.remove(user);
+		return deniedSet.remove(user.getId());
+	}
+	
+	/**
+	 * Return wether or not the given user is an admin.
+	 * @param user The user to check.
+	 * @return true if the user is an admin.
+	 */
+	public static final boolean isAdmin(User user) {
+		return admins.contains(user.getId());
+	}
+	
+	/**
+	 * Adds a user to the admin group.
+	 * @param user The user to make admin.
+	 * @return true if the user has been made admin.
+	 * @return false if the user already was admin.
+	 */
+	public static final boolean makeAdmin(User user) {
+		return admins.add(user.getId());
+	}
+	
+	/**
+	 * Removes the user from the admin group.
+	 * @param user The user to remove.
+	 * @return true if the user was an admin and has been removed.
+	 * @return false if the user was not an admin.
+	 */
+	public static final boolean removeAdmin(User user) {
+		return admins.remove(user.getId());
 	}
 }
