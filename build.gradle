@@ -41,7 +41,3 @@ task makeJarNoVersion(type: Jar) {
     from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
     with jar
 }
-
-task listJars << {
-    configurations.compile.each { File file -> println file.name }
-}
