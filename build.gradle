@@ -29,6 +29,7 @@ task makeJar(type: Jar) {
 }
 
 task makeJarNoVersion(type: Jar) {
+	version = null
 	from('src/main/java') {
       include  '**/*.ini'
    	}
