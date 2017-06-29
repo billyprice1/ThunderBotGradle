@@ -28,6 +28,19 @@ task makeJar(type: Jar) {
     with jar
 }
 
+task makeJarNoVersion(type: Jar) {
+	from('src/main/java') {
+      include  '**/*.ini'
+   	}
+	manifest {
+        attributes 'Implementation-Title': 'ThunderBot',
+        	'Main-Class': 'wh1spr.thunderbot.ThunderBot'
+    }
+    baseName = 'ThunderBot'
+    from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
+    with jar
+}
+
 task listJars << {
     configurations.compile.each { File file -> println file.name }
 }

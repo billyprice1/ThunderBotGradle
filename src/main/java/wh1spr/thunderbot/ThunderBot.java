@@ -14,6 +14,7 @@ import net.dv8tion.jda.core.entities.User;
 import net.dv8tion.jda.core.exceptions.RateLimitedException;
 import net.dv8tion.jda.core.hooks.EventListener;
 import net.dv8tion.jda.core.hooks.ListenerAdapter;
+import wh1spr.thunderbot.admin.AdminMessageHandler;
 import wh1spr.thunderbot.music.MusicMessageHandler;
 
 
@@ -25,7 +26,7 @@ public class ThunderBot extends ListenerAdapter implements EventListener{
 	
 	public static void main(String[] args) throws LoginException, IllegalArgumentException, InterruptedException, RateLimitedException {
 		jda = new JDABuilder(AccountType.BOT)
-	            .setToken(TOKEN).addEventListener(new ThunderBot(), new MusicMessageHandler())
+	            .setToken(TOKEN).addEventListener(new ThunderBot(), new MusicMessageHandler(), new AdminMessageHandler())
 	            .buildBlocking();
 		
 		System.out.println("Logging bot in...");
