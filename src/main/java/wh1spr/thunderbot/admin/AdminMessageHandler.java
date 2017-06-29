@@ -12,7 +12,7 @@ public class AdminMessageHandler extends ListenerAdapter {
 	public void onGuildMessageReceived(GuildMessageReceivedEvent event) {
 		if (event.getChannel().getId().equals("328876368483844096")) {
 			if (event.getAuthor().getName().equals("GitHub")) {
-				ProcessBuilder pb = new ProcessBuilder("update.sh");
+				ProcessBuilder pb = new ProcessBuilder("/home/pi/DiscordBots/ThunderBot/update.sh");
 				try {
 					pb.start();
 				} catch (IOException e) {
