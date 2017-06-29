@@ -73,6 +73,11 @@ public class ThunderBot extends ListenerAdapter implements EventListener{
 	public static final boolean allow(User user) {
 		return deniedSet.remove(user.getId());
 	}
+	public static final void allow(List<User> users) {
+		for (User e : users) {
+			allow(e);
+		}
+	}
 	
 	/**
 	 * Return wether or not the given user is an admin.

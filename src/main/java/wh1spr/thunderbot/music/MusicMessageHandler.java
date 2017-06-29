@@ -56,7 +56,6 @@ public class MusicMessageHandler extends ListenerAdapter{
 	private final AudioPlayerManager playerManager;
 	private final HashMap<String, GuildMusicManager> mngs; //id of the guild, manager for that guild
 	private final HelpCommand help = new HelpCommand();
-	private final HashSet<User> deniedSet = new HashSet<>();
 	
 	@Override
 	public void onGuildMessageReceived(GuildMessageReceivedEvent event) {
@@ -69,7 +68,7 @@ public class MusicMessageHandler extends ListenerAdapter{
 			return;
 		}
 		
-		if (deniedSet.contains(event.getAuthor())) {
+		if (ThunderBot.isDenied(event.getAuthor())) {
 			event.getAuthor().openPrivateChannel().complete().sendMessage("You have been denied to use this bot.").queue();
 			event.getChannel().deleteMessageById(event.getMessageId());
 			return;
@@ -93,7 +92,6 @@ public class MusicMessageHandler extends ListenerAdapter{
 	    	case "&&deny":
 	    		if (command.length < 2 || event.getMessage().getMentionedUsers().get(0) == null) return;
 	    		if (ThunderBot.isAdmin(event.getAuthor())) {
-	    			deniedSet.add(event.getMessage().getMentionedUsers().get(0));
 	    			ThunderBot.deny(event.getMessage().getMentionedUsers());
 	    			String msg = "";
 	    			for (User e : event.getMessage().getMentionedUsers()) {
@@ -105,8 +103,13 @@ public class MusicMessageHandler extends ListenerAdapter{
 	    	case "&&allow":
 	    		if (command.length < 2 || event.getMessage().getMentionedUsers().get(0) == null) return;
 	    		if (ThunderBot.isAdmin(event.getAuthor())) {
-	    			deniedSet.remove(event.getMessage().getMentionedUsers().get(0));
-	    			event.getChannel().sendMessage("Allowed " + event.getMessage().getMentionedUsers().get(0).getAsMention()).queue();
+	    			String msg = "";
+	    			for (User e : event.getMessage().getMentionedUsers()) {
+	    				if (ThunderBot.isDenied(e))
+	    					msg += e.getAsMention() + "\n";
+	    			}
+	    			ThunderBot.allow(event.getMessage().getMentionedUsers());
+	    			event.getChannel().sendMessage(new EmbedBuilder().setColor(Color.green).addField(new Field("Allowed following users", msg, false)).build()).queue();
 	    			
 	    		}
 	    		break;
@@ -129,7 +132,8 @@ public class MusicMessageHandler extends ListenerAdapter{
 				if (command.length < 2) {
 					channel = guild.getVoiceChannels().get(0);
 				} else {
-					channel = guild.getVoiceChannelsByName(command[1], true).get(0);
+					String name = event.getMessage().getRawContent().replaceFirst(command[0] + " ", "");
+					channel = guild.getVoiceChannelsByName(name, true).get(0);
 				}
 				if (channel == null) {
 					event.getChannel().sendMessage("There is no channel with name ```" + command[1] + "```").queue();
@@ -228,11 +232,11 @@ public class MusicMessageHandler extends ListenerAdapter{
 			case "!stop":
 			case "§1":
 			case "`1":
-				if ((command[0].equals("§1") || command[0].equals("`1"))&& ThunderBot.admins.contains(event.getAuthor().getId())) {
+				if ((command[0].equals("§1") || command[0].equals("`1"))&& ThunderBot.isAdmin(event.getAuthor())) {
 					event.getChannel().deleteMessageById(event.getMessageId()).queue();
 					player.stopTrack();
 		            player.setPaused(false);
-				} else if (command[0].equals("!stop")) {
+				} else {
 					player.stopTrack();
 		            player.setPaused(false);
 				}
