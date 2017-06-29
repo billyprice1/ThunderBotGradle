@@ -115,7 +115,7 @@ public class MusicMessageHandler extends ListenerAdapter{
 	    		break;
 			case "&&shutdown":
 				event.getChannel().deleteMessageById(event.getMessageIdLong()).complete();
-				if (ThunderBot.admins.contains(event.getAuthor().getId())) {
+				if (ThunderBot.isAdmin(event.getAuthor())) {
 					guild.getAudioManager().closeAudioConnection();
 					event.getChannel().sendMessage("Goodbye.").complete();
 					ThunderBot.jda.shutdown();
@@ -174,11 +174,11 @@ public class MusicMessageHandler extends ListenerAdapter{
 				if (command.length == 1) {
 					event.getChannel().sendMessage(String.format("The current volume is %d/100", player.getVolume())).queue();
 				} else {
-					int vol = 35;
+					int vol = player.getVolume();
 					try {
 						vol = Integer.valueOf(command[1]);
 					} catch (Exception e) {
-						vol = 35;
+						vol = player.getVolume();
 						//usage
 					}
 					player.setVolume(vol);
@@ -213,7 +213,7 @@ public class MusicMessageHandler extends ListenerAdapter{
 					//usage
 					ThunderBot.jda.getSelfUser().getManager().setName("ThunderBot").submit();
 					return;
-				} else if (ThunderBot.admins.contains(event.getAuthor().getId())){
+				} else if (ThunderBot.isAdmin(event.getAuthor())){
 //					this.jda.getPresence().setGame(Game.of(command[1]));	
 					ThunderBot.jda.getSelfUser().getManager().setName(event.getMessage().getRawContent().replaceFirst(command[0], "")).submit();
 				}
@@ -224,7 +224,7 @@ public class MusicMessageHandler extends ListenerAdapter{
 				if (command.length < 2) {
 					//usage
 					return;
-				} else if (ThunderBot.admins.contains(event.getAuthor().getId())){
+				} else if (ThunderBot.isAdmin(event.getAuthor())){
 					ThunderBot.jda.getPresence().setGame(Game.of(event.getMessage().getRawContent().replaceFirst(command[0], "")));	
 				}
 				break;
@@ -246,7 +246,7 @@ public class MusicMessageHandler extends ListenerAdapter{
 				try {
 						
 				
-					if (ThunderBot.admins.contains(event.getAuthor().getId())) {
+					if (ThunderBot.isAdmin(event.getAuthor())) {
 						final List<Message> msgs = new ArrayList<>();
 						if (command.length < 2) {
 							event.getChannel().getIterableHistory().complete().iterator().forEachRemaining(e->{if (!e.isPinned()) {msgs.add(e);}});
