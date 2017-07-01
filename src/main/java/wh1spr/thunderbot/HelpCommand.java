@@ -62,7 +62,7 @@ public class HelpCommand {
 				for (Entry<String, String> command : section.entrySet()) {
 					if (command.getKey().startsWith("Usage")) {
 						usages[Integer.valueOf(command.getKey().substring(command.getKey().length()-1))] = command.getValue();
-					} else if (command.getKey().startsWith("Usage")) {
+					} else if (command.getKey().startsWith("Alias")) {
 						aliases[Integer.valueOf(command.getKey().substring(command.getKey().length()-1))] = command.getValue();
 					} else {
 						msg +="\n" + String.format("%14s || %-50s", command.getKey(), command.getValue());	
