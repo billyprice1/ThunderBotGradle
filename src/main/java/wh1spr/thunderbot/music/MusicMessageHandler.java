@@ -38,6 +38,7 @@ import net.dv8tion.jda.core.managers.AudioManager;
 import net.dv8tion.jda.core.requests.restaction.pagination.MessagePaginationAction;
 import wh1spr.thunderbot.HelpCommand;
 import wh1spr.thunderbot.ThunderBot;
+import wh1spr.thunderbot.admin.AdminMessageHandler;
 
 public class MusicMessageHandler extends ListenerAdapter{
 
@@ -259,6 +260,14 @@ public class MusicMessageHandler extends ListenerAdapter{
 				} catch (Exception e) {
 					event.getChannel().sendMessage("ERROR: Something went wrong while executing this command.");
 				}
+				break;
+			case "&&forceupdate":
+			case "&&fu":
+				if (ThunderBot.isAdmin(event.getAuthor())) {
+					event.getChannel().sendMessage("Going to update, I should be back online in 30 seconds.").queue();
+					AdminMessageHandler.update(); 
+				}
+				break;
 			default:
 				break;
 		}
